@@ -4,12 +4,11 @@ const QRCode = require('qrcode');
 const cors = require('cors');
 const fs = require('fs');
 const https = require('https');
-const { expressjwt : jwt } = require('express-jwt');
+const { expressjwt: jwt } = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
 const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
-const ejs = require('ejs');
-const {auth, requiresAuth} = require('express-openid-connect');
+const { auth, requiresAuth } = require('express-openid-connect');
 
 require('dotenv').config();
 const app = express();
@@ -19,22 +18,10 @@ const port = externalUrl && process.env.PORT ? parseInt(process.env.PORT) : 4080
 // Middleware za parsiranje JSON tijela zahtjeva
 app.use(bodyParser.json());
 app.use(cors());
-app.set('view engine', 'ejs');
 
-app.use(
-    auth({
-        authRequired: false,
-        auth0Logout: true,
-        secret: process.env.SECRET,
-        baseURL:  externalUrl || `https://localhost:${port}`,
-        clientID: process.env.AUTH0_CLIENT_ID,
-        issuerBaseURL: process.env.ISSUER_BASE_URL,
-        routes: {
-            login: false,
-            callback: '/callback' // Explicit callback route
-        }
-    })
-);
+// Postavljanje Pug kao templating engine
+app.set('view engine', 'pug');
+app.set('views', './views'); // Ako se Pug datoteke nalaze u mapi 'views'
 
 // Postavljanje veze s bazom podataka
 const pool = new Pool({
@@ -54,25 +41,54 @@ const checkJwt = jwt({
     algorithms: ['RS256'],
 });
 
+// Middleware za autentifikaciju
+app.use(
+    auth({
+        authRequired: false,
+        auth0Logout: true,
+        secret: process.env.SECRET,
+        baseURL: externalUrl || `https://localhost:${port}`,
+        clientID: process.env.AUTH0_CLIENT_ID,
+        issuerBaseURL: process.env.ISSUER_BASE_URL,
+        routes: {
+            login: false,
+            callback: '/callback' // Explicit callback route
+        }
+    })
+);
+
+// Definiranje ruta
 app.get('/', (req, res) => {
-    res.send('Hello, welcome to the QR Code generator API!');
+    res.redirect('/home'); // Preusmjeri na /home
+});
+
+app.get('/home', async (req, res) => {
+    let qrCodeCount = 0;
+
+    try {
+        const result = await pool.query('SELECT COUNT(*) FROM codes');
+        qrCodeCount = parseInt(result.rows[0].count);
+    } catch (error) {
+        console.error('Greška prilikom dobivanja broja QR kodova:', error);
+    }
+
+    res.render('home', { qrCodeCount }); // Renderiraj home.pug s brojem QR kodova
 });
 
 app.get('/count-qr-codes', async (req, res) => {
     try {
-      const result = await pool.query('SELECT COUNT(*) FROM codes');
-      const count = parseInt(result.rows[0].count);
-      res.status(200).json({ count });
+        const result = await pool.query('SELECT COUNT(*) FROM codes');
+        const count = parseInt(result.rows[0].count);
+        res.status(200).json({ count });
     } catch (error) {
-      console.error('Greška prilikom dobivanja broja QR kodova:', error);
-      res.status(500).json({ message: 'Greška prilikom dobivanja broja QR kodova' });
+        console.error('Greška prilikom dobivanja broja QR kodova:', error);
+        res.status(500).json({ message: 'Greška prilikom dobivanja broja QR kodova' });
     }
-  });
+});
 
 // Endpoint za generiranje QR koda (zaštićen autentifikacijom)
 app.post('/generate-qr', checkJwt, async (req, res) => {
     const { oib, ime, prezime } = req.body;
-    console.log("Token received:", req.headers.authorization);
 
     // Provjera jesu li svi podaci prisutni
     if (!oib || !ime || !prezime) {
@@ -92,7 +108,7 @@ app.post('/generate-qr', checkJwt, async (req, res) => {
         const ticketUrl = `${externalUrl}/ticket/${qrCodeId}`;
 
         // Generiraj QR kod s URL-om ulaznice
-        const qrCodeUrl = await QRCode.toDataURL(ticketUrl);
+        const qrCodeImage = await QRCode.toBuffer(ticketUrl, { type: 'png' });
 
         // Spremi podatke u bazu
         await pool.query(
@@ -100,11 +116,7 @@ app.post('/generate-qr', checkJwt, async (req, res) => {
             [qrCodeId, oib, ime, prezime]
         );
 
-        const qrCodeImage = await QRCode.toBuffer(ticketUrl, { type: 'png' });
-        const base64QRCode = qrCodeImage.toString("base64");
-
         res.type('png').send(qrCodeImage);
-        //res.render('qrcode', { qrCode: `data:image/png;base64,${base64QRCode}` });
     } catch (error) {
         console.error('There was an error generating the QR code:', error);
         res.status(500).json({ message: 'Error generating QR code.' });
@@ -114,6 +126,8 @@ app.post('/generate-qr', checkJwt, async (req, res) => {
 // Endpoint za prikaz podataka o ulaznici
 app.get('/ticket/:id', requiresAuth(), async (req, res) => {
     const { id } = req.params;
+    let ticket = null;
+    let error = '';
 
     try {
         // Dohvati podatke o ulaznici iz baze koristeći ID ulaznice
@@ -123,26 +137,27 @@ app.get('/ticket/:id', requiresAuth(), async (req, res) => {
             return res.status(404).json({ message: 'Ticket not found' });
         }
 
-        res.status(200).json(result.rows[0]);
+        ticket = result.rows[0];
     } catch (error) {
         console.error('There was an error fetching the ticket:', error);
-        res.status(500).json({ message: 'Error fetching ticket.' });
+        error = 'Greška prilikom dohvaćanja podataka o ulaznici.';
     }
+
+    res.render('ticketDetails', { ticket, error, id }); // Renderiraj ticketDetails.pug
 });
 
+// Pokretanje servera
 if (externalUrl) {
     const hostname = '0.0.0.0'; //ne 127.0.0.1
     app.listen(port, hostname, () => {
-    console.log(`Server locally running at http://${hostname}:${port}/ and from 
-    outside on ${externalUrl}`);
+        console.log(`Server locally running at http://${hostname}:${port}/ and from outside on ${externalUrl}`);
     });
-    }
-    else {
+} else {
     https.createServer({
-    key: fs.readFileSync('server.key'),
-    cert: fs.readFileSync('server.cert')
+        key: fs.readFileSync('server.key'),
+        cert: fs.readFileSync('server.cert')
     }, app)
     .listen(port, function () {
-    console.log(`Server running at https://localhost:${port}/`);
+        console.log(`Server running at https://localhost:${port}/`);
     });
 }

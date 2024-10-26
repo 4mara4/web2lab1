@@ -3,14 +3,14 @@ import { Box, Typography, Paper, Dialog, DialogTitle, DialogContent, DialogActio
 import axios from 'axios';
 
 const Home = () => {
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [qrCodeCount, setQrCodeCount] = useState(0); // Stanje za broj QR kodova
-  const [isDialogOpen, setIsDialogOpen] = useState(false); // Stanje za modal
+
+  const externalUrl = process.env.RENDER_EXTERNAL_URL;
 
   // Funkcija za dohvaćanje broja QR kodova
   const fetchQrCodeCount = async () => {
     try {
-      const countResponse = await axios.get('https://localhost:3000/count-qr-codes'); // Zamijeni IP adresom svog servera
+      const countResponse = await axios.get(`${externalUrl}/count-qr-codes`); 
       setQrCodeCount(countResponse.data.count);
     } catch (error) {
       console.error('Greška prilikom dohvaćanja broja QR kodova:', error);
@@ -22,10 +22,6 @@ const Home = () => {
     fetchQrCodeCount();
   }, []);
 
-  // Funkcija za zatvaranje modala
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
-  };
 
   return (
     <Box
@@ -60,21 +56,6 @@ const Home = () => {
       <Typography variant="body1" sx={{ marginTop: 2 }}>
         QR codes are generated through API requests only.
       </Typography>
-
-      {/* QR Code Display Dialog */}
-      <Dialog open={isDialogOpen} onClose={handleCloseDialog}>
-        <DialogTitle>Generated QR Code</DialogTitle>
-        <DialogContent>
-          {qrCodeUrl && (
-            <img src={qrCodeUrl} alt="QR Code" style={{ width: '100%' }} />
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };
