@@ -2,30 +2,30 @@ doctype html
 html(lang="en")
   head
     title QR Code Generator - Home
-    link(rel="stylesheet", href="/static/style.css") // Ako imate stilove
+    link(rel="stylesheet", href="/static/style.css")
   body
-    // Glavni sadržaj
+    
     .container(style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center;")
       h1 Welcome!
       h5 QR codes generated:
       .paper(style="background-color: green; color: white; padding: 20px; width: 100px; display: flex; align-items: center; justify-content: center; margin: 20px 0;")
-        h4= qrCodeCount // Ovdje će se prikazati broj QR kodova
+        h4= qrCodeCount 
       p(style="margin-top: 20px;") QR codes are generated through API requests only.
 
-    // Ovdje možete dodati script za dohvat broja QR kodova
+    
     script.
       const externalUrl = process.env.RENDER_EXTERNAL_URL;
 
-      // Funkcija za dohvaćanje broja QR kodova
+      
       async function fetchQrCodeCount() {
         try {
           const response = await fetch(`${externalUrl}/count-qr-codes`);
           const data = await response.json();
-          document.querySelector('h4').textContent = data.count; // Ažuriraj broj QR kodova
+          document.querySelector('h4').textContent = data.count; 
         } catch (error) {
           console.error('Greška prilikom dohvaćanja broja QR kodova:', error);
         }
       }
 
-      // Pozovi funkciju kada se učita stranica
+      
       fetchQrCodeCount();

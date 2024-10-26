@@ -16,10 +16,10 @@ html(lang="en")
         h6 Surname: #{ticket.prezime}
         h6 Created at: #{new Date(ticket.created_at).toLocaleString()}
 
-    // JavaScript kod za dohvaćanje podataka o ulaznici
+    
     script.
       const externalUrl = process.env.RENDER_EXTERNAL_URL;
-      const ticketId = "#{id}"; // Proslijedite ID ulaznice
+      const ticketId = "#{id}"; 
 
       async function fetchTicketDetails() {
         try {
@@ -28,7 +28,7 @@ html(lang="en")
             throw new Error('Greška prilikom dohvaćanja podataka o ulaznici.');
           }
           const ticket = await response.json();
-          // Ažuriraj HTML sadržaj
+          
           document.querySelector('h3').textContent = 'Ticket Details';
           document.querySelector('h6:nth-of-type(1)').textContent = `OIB: ${ticket.oib}`;
           document.querySelector('h6:nth-of-type(2)').textContent = `Name: ${ticket.ime}`;
@@ -40,5 +40,5 @@ html(lang="en")
         }
       }
 
-      // Pozovi funkciju kada se učita stranica
+      
       fetchTicketDetails();
