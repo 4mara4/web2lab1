@@ -13,7 +13,8 @@ const {auth, requiresAuth} = require('express-openid-connect');
 
 require('dotenv').config();
 const app = express();
-const port = 3000;
+const externalUrl = process.env.RENDER_EXTERNAL_URL;
+const port = externalUrl && process.env.PORT ? parseInt(process.env.PORT) : 4080;
 
 // Middleware za parsiranje JSON tijela zahtjeva
 app.use(bodyParser.json());
@@ -25,7 +26,7 @@ app.use(
         authRequired: false,
         auth0Logout: true,
         secret: process.env.SECRET,
-        baseURL: `https://localhost:${port}`,
+        baseURL:  externalUrl || `https://localhost:${port}`,
         clientID: process.env.AUTH0_CLIENT_ID,
         issuerBaseURL: process.env.ISSUER_BASE_URL,
         routes: {
@@ -125,10 +126,19 @@ app.get('/ticket/:id', requiresAuth(), async (req, res) => {
     }
 });
 
-// Pokretanje servera s HTTPS certifikatom
-https.createServer({
+if (externalUrl) {
+    const hostname = '0.0.0.0'; //ne 127.0.0.1
+    app.listen(port, hostname, () => {
+    console.log(`Server locally running at http://${hostname}:${port}/ and from 
+    outside on ${externalUrl}`);
+    });
+    }
+    else {
+    https.createServer({
     key: fs.readFileSync('server.key'),
     cert: fs.readFileSync('server.cert')
-}, app).listen(port, () => {
+    }, app)
+    .listen(port, function () {
     console.log(`Server running at https://localhost:${port}/`);
-});
+    });
+}
