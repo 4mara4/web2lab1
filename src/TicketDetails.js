@@ -8,10 +8,13 @@ const TicketDetails = () => {
   const [ticket, setTicket] = useState(null);
   const [error, setError] = useState('');
 
+  const externalUrl = process.env.RENDER_EXTERNAL_URL;
+  const port = externalUrl && process.env.PORT ? parseInt(process.env.PORT) : 4080;
+
   useEffect(() => {
     const fetchTicketDetails = async () => {
       try {
-        const response = await axios.get(`https://localhost:3000/ticket/${id}`);
+        const response = await axios.get(`${externalUrl}/ticket/${id}`);
         setTicket(response.data);
       } catch (error) {
         console.error('Greška prilikom dohvaćanja podataka o ulaznici:', error);

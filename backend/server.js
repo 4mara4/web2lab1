@@ -85,7 +85,7 @@ app.post('/generate-qr', checkJwt, async (req, res) => {
         }
 
         const qrCodeId = uuidv4(); // Jedinstveni identifikator za QR kod
-        const ticketUrl = `https://localhost:3000/ticket/${qrCodeId}`;
+        const ticketUrl = `${externalUrl}/ticket/${qrCodeId}`;
 
         // Generiraj QR kod s URL-om ulaznice
         const qrCodeUrl = await QRCode.toDataURL(ticketUrl);
