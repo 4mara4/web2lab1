@@ -37,7 +37,7 @@
     "build": "npm install && npm run clean && npm run copy-views",
     "clean": "shx rm -rf dist",
     "copy-views": "shx cp -r src/views/ dist",
-    "start": "node dist/server.js"
+    "start": "node backend/server.js"
 },
   "eslintConfig": {
     "extends": [
