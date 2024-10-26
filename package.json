@@ -37,7 +37,7 @@
   "scripts": {
     "build": "npm install && npm run clean && npm run copy-views",
     "clean": "shx rm -rf dist",
-    "copy-views": "shx cp -r src/views/ dist",
+    "copy-views": "shx cp -r views/ dist",
     "start": "node backend/server.js"
   },
   "eslintConfig": {
