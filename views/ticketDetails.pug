@@ -2,43 +2,16 @@ doctype html
 html(lang="en")
   head
     title Ticket Details
-    link(rel="stylesheet", href="/static/style.css") // Ako imate stilove
+    link(rel="stylesheet", href="/static/style.css")
   body
     .container(style="text-align: center;")
       h3 Ticket Details
       if error
         h4(style="color: red;")= error
-      else if !ticket
-        h4 Loading ticket details...
-      else
+      else if ticket
         h6 OIB: #{ticket.oib}
         h6 Name: #{ticket.ime}
         h6 Surname: #{ticket.prezime}
         h6 Created at: #{new Date(ticket.created_at).toLocaleString()}
-
-    
-    script.
-      const externalUrl = process.env.RENDER_EXTERNAL_URL;
-      const ticketId = "#{id}"; 
-
-      async function fetchTicketDetails() {
-        try {
-          const response = await fetch(`${externalUrl}/ticket/${ticketId}`);
-          if (!response.ok) {
-            throw new Error('Greška prilikom dohvaćanja podataka o ulaznici.');
-          }
-          const ticket = await response.json();
-          
-          document.querySelector('h3').textContent = 'Ticket Details';
-          document.querySelector('h6:nth-of-type(1)').textContent = `OIB: ${ticket.oib}`;
-          document.querySelector('h6:nth-of-type(2)').textContent = `Name: ${ticket.ime}`;
-          document.querySelector('h6:nth-of-type(3)').textContent = `Surname: ${ticket.prezime}`;
-          document.querySelector('h6:nth-of-type(4)').textContent = `Created at: ${new Date(ticket.created_at).toLocaleString()}`;
-        } catch (error) {
-          console.error('Greška prilikom dohvaćanja podataka o ulaznici:', error);
-          document.querySelector('h4').textContent = 'Greška prilikom dohvaćanja podataka o ulaznici.';
-        }
-      }
-
-      
-      fetchTicketDetails();
+      else
+        h4 Loading ticket details...

@@ -101,7 +101,7 @@ app.post('/generate-qr', checkJwt, async (req, res) => {
         const count = parseInt(result.rows[0].count);
 
         if (count >= 3) {
-            return res.status(400).json({ message: 'Already created three QR codes for this OIB!' });
+            return res.status(400).json({ message: 'Nije moguće stvoriti više od 3 QR koda za isti OIB!' });
         }
 
         const qrCodeId = uuidv4(); // Jedinstveni identifikator za QR kod
