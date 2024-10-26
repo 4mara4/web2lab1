@@ -88,7 +88,7 @@ app.get('/count-qr-codes', async (req, res) => {
 
 // Endpoint za generiranje QR koda (zaštićen autentifikacijom)
 app.post('/generate-qr', checkJwt, async (req, res) => {
-    const { oib, ime, prezime } = req.body;
+    const { vatin : oib, firstName : ime, lastName : prezime } = req.body;
 
     // Provjera jesu li svi podaci prisutni
     if (!oib || !ime || !prezime) {
