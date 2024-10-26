@@ -54,6 +54,10 @@ const checkJwt = jwt({
     algorithms: ['RS256'],
 });
 
+app.get('/', (req, res) => {
+    res.send('Hello, welcome to the QR Code generator API!');
+});
+
 app.get('/count-qr-codes', async (req, res) => {
     try {
       const result = await pool.query('SELECT COUNT(*) FROM codes');
